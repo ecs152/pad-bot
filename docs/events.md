@@ -20,6 +20,7 @@ other line in the log. Emit new events with `padbot.events.emit(type, **fields)`
 | `turn` | `turn`, `board` (5 strings of 6 orbs: R B G L D H, `.` unknown), `route` (list of [row, col]), `goal`, `mechanics` | right after each drag (same dict as `logs/run-*.jsonl`) |
 | `cleared` | `count`, `runs` (both across the whole queue) | when a rewards screen is left |
 | `done` | `cleared` | the whole queue finished |
+| `info` | `monster` (`no`, `name`, `leader`, `active`, `awakenings`, `keywords`) or null, `dungeon` (`name`, `floors`, `floor`: stamina, battles, enemies) or null, `updated`; or `error` | `padbot info`: read-only lookup of the screen against DadGuide NA data |
 | `stop` | `reason` | any stop: safety, error, or the Stop button (SIGINT) |
 
 Every event also has `t` (Unix time).

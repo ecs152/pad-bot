@@ -64,6 +64,8 @@ Run these from this folder. Nothing touches the phone without `--live`.
 .venv/bin/python -m padbot crop shots/x.png orbs D_plus X Y W H        # make a reference image
 .venv/bin/python -m padbot board shots/battle.png     # read the board, draw the planned route
 .venv/bin/python -m padbot testdrag 2 2 3 2 --live    # drag one orb (battle must be on screen)
+.venv/bin/python -m padbot info --update              # download DadGuide fan data (NA, ~240 MB) to data/
+.venv/bin/python -m padbot info                       # name the monster/dungeon on screen: skills, keywords, enemies
 .venv/bin/python -m padbot run                        # dry run: recognise and plan, no clicks
 .venv/bin/python -m padbot run --live --runs 3 --path "Aither Desert/Beyond the Desert"   # real run
 .venv/bin/python -m unittest discover -s tests -t .   # self-tests, no phone
