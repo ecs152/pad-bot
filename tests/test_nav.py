@@ -52,6 +52,29 @@ class Decide(unittest.TestCase):
         self.assertFalse(nav.stop_word(lines(("Beyond the Desert", 500))))
 
 
+class Queue(unittest.TestCase):
+    def test_other_dungeons_floor_list_backs_out(self):
+        L = lines(("Back", 340), ("Sky Garden", 345), ("4-7-1", 400), ("Cloud Floor", 440), ("Battles", 480))
+        self.assertEqual(nav.decide(L, PATH, "You", 1440)[:2], ("list", "Back"))
+
+    def test_own_dungeons_floor_list_scrolls(self):
+        L = lines(("Back", 340), ("Aither Desert", 345), ("4-6-5", 400), ("Genie of the Lamp", 440), ("Battles", 480))
+        self.assertEqual(nav.decide(L, PATH, "You", 1440), ("list", None, None))
+
+    def test_dungeon_list_without_target_scrolls(self):
+        L = lines(("Back", 340), ("Stage 4", 345), ("4-7", 400), ("Sky Garden", 440))
+        self.assertEqual(nav.decide(L, PATH, "You", 1440), ("list", None, None))
+
+    def test_parse_queue(self):
+        from padbot.__main__ import parse_queue
+        from padbot.mac import Stop
+        q = parse_queue('[{"path": "Aither Desert/Beyond the Desert", "runs": 2}, {"uncleared": true}]')
+        self.assertEqual(q, [{"path": PATH, "uncleared": False, "runs": 2}, {"path": [], "uncleared": True, "runs": 1}])
+        for bad in ('{}', '[]', '[{"path": "Aither Desert"}]', '[{"uncleared": true, "runs": 0}]', 'nope'):
+            with self.assertRaises(Stop):
+                parse_queue(bad)
+
+
 class Uncleared(unittest.TestCase):
     def rows(self, *items):
         return [(t, 1.0, (x, y, 100, 25)) for t, x, y in items]
