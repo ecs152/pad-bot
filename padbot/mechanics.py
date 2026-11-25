@@ -63,6 +63,12 @@ CATALOGUE = {
                 [("active", r"set damage cap")], "Two hits, true damage, or a higher damage cap."),
     "status_void": ("Status shield", r"voids status ailments", [],
                     "Delays, poison and debuffs from the team don't land."),
+    "buff_dispel": ("Buff dispel", r"voids player buff effects", [], "Re-apply buffs after it."),
+    "assist_void": ("Assist void / skills disabled", r"disable active skills",
+                    [("awakening", "Assist Void Resistance", "card")], "Assist void resist; plan without actives."),
+    "damage_immunity": ("Damage immunity", r"immune to damage", [], "Kill the other enemies first, or wait it out."),
+    "barbed": ("Barbed orbs", r"\bbarb\b", [], "Don't drag through them (the bot's route must avoid them)."),
+    "board_size": ("Board size change", r"change board size", [], "Plan for the new board size."),
 }
 
 
