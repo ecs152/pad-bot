@@ -11,12 +11,15 @@ other line in the log. Emit new events with `padbot.events.emit(type, **fields)`
 
 | type | fields | when |
 |---|---|---|
-| `start` | `live`, `runs`, `path` (list), `uncleared` | before the loop starts |
+| `start` | `live`, `runs` (whole queue), `path` (list), `uncleared`, `queue` (list of `{target, runs}`) | before the loop starts |
+| `queue` | `index` (0-based), `of`, `target` ("Dungeon/Floor" or "uncleared"), `runs` | each queue item starts |
+| `stamina` | `now`, `max` | stamina read off the top bar changed |
+| `run` | `target`, `result` (cleared, stopped), `seconds`, `stamina` ([now, max] or null), `coins`, `drops` ([] = none, null = unreadable), `reason` (stopped only) | a run ends; same record appended to `logs/history.jsonl` with `t` |
 | `screen` | `name`: battle_ready, battle_busy, list, helper, helper_popup, enter, tips, results, unknown | every loop pass |
 | `skill` | `slot` (1-6), `fired`, `turn` | after each skill tap |
 | `turn` | `turn`, `board` (5 strings of 6 orbs: R B G L D H, `.` unknown), `route` (list of [row, col]), `goal`, `mechanics` | right after each drag (same dict as `logs/run-*.jsonl`) |
-| `cleared` | `count`, `runs` | when a rewards screen is left |
-| `done` | `cleared` | runs reached |
+| `cleared` | `count`, `runs` (both across the whole queue) | when a rewards screen is left |
+| `done` | `cleared` | the whole queue finished |
 | `info` | `monster` (`no`, `name`, `leader`, `active`, `awakenings`, `keywords`) or null, `dungeon` (`name`, `floors`, `floor`: stamina, battles, enemies) or null, `updated`; or `error` | `padbot info`: read-only lookup of the screen against DadGuide NA data |
 | `stop` | `reason` | any stop: safety, error, or the Stop button (SIGINT) |
 

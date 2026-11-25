@@ -18,6 +18,13 @@ enum Snapshot {
         bot.handle(#"@ev {"type":"screen","name":"battle_ready"}"#)
         bot.handle(#"@ev {"type":"turn","turn":2,"board":["BDGBHB","DDDBDL","BDLLDR","RRDDBH","BRBLGH"],"route":[[2,4],[3,4],[3,5]],"goal":{"crosses":{"D":1}},"mechanics":[]}"#)
         bot.handle(#"@ev {"type":"cleared","count":1,"runs":3}"#)
+        // queue + history samples
+        QueuePanel.store = UserDefaults(suiteName: "local.padbot.snapshot")!
+        QueuePanel.store.set(#"[{"id":"6F1C2C9E-0000-4000-8000-000000000001","uncleared":false,"path":"Sky Garden/Cloud Floor","runs":3},{"id":"6F1C2C9E-0000-4000-8000-000000000002","uncleared":true,"path":"","runs":5}]"#, forKey: "queue")
+        bot.handle(#"@ev {"type":"queue","index":0,"of":2,"target":"Sky Garden/Cloud Floor","runs":3}"#)
+        bot.handle(#"@ev {"type":"stamina","now":578,"max":585}"#)
+        bot.handle(#"@ev {"type":"run","t":1795500000.0,"target":"Sky Garden/Cloud Floor","result":"cleared","seconds":162.4,"stamina":[578,585],"coins":6304,"drops":[]}"#)
+        bot.handle(#"@ev {"type":"run","t":1795500200.0,"target":"uncleared: Genie of the Lamp","result":"stopped","seconds":48.0,"stamina":[570,585],"coins":null,"drops":null,"reason":"Stop word on screen: 'continue?'"}"#)
         bot.running = true
         InfoLookup.shared.handle(InfoLookup.sample)
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
