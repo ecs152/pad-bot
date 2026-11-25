@@ -190,7 +190,7 @@ class Pipeline(unittest.TestCase):
 
     def test_no_drag_if_board_changed(self):
         m = RecMouse()
-        other = ["RBGRBG", "BGDGRB", "GDLDBR", "RBDRGB", "BGDBRH"]
+        other = ["RBGRBG", "BGDGRB", "GDLDBR", "RBDRGB", "BGDBRB"]
         # loop frame, 2 stable reads before judging, 2 before solving, then the pre-drag check sees a new board
         self.bot([make_frame(BOARD)] * 5 + [make_frame(other)], m).run(max_iterations=1)
         self.assertEqual(m.drags, [])
