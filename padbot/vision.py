@@ -77,6 +77,22 @@ def read_board(img, rect, orbs, max_dist, ready_median=15.0):
     return [''.join(r) for r in rows], float(np.median(dists)) <= ready_median
 
 
+def merge(a, b):
+    """Two board reads that agree wherever both are known, with '.' filled from the other; else None.
+    Sparkling (enhanced) orbs read as '.' on some frames, so exact equality may never happen."""
+    if a is None or b is None:
+        return None
+    out = []
+    for ra, rb in zip(a, b):
+        row = ""
+        for x, y in zip(ra, rb):
+            if x != y and "." not in (x, y):
+                return None
+            row += y if x == "." else x
+        out.append(row)
+    return out
+
+
 def cell_centre(img, rect, r, c):
     h, w = img.shape[:2]
     x0, y0, x1, y1 = rect[0] * w, rect[1] * h, rect[2] * w, rect[3] * h

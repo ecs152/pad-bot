@@ -24,3 +24,11 @@ class BoardViewTests(unittest.TestCase):
             self.assertEqual(last_event(Path(d)), ev)
             self.assertEqual(caption(ev)[:2], ["Turn 3  -  1 step", "Goal: dark cross x1"])
             self.assertIsNone(last_event(Path(d, "none")))
+
+
+class Merge(unittest.TestCase):
+    def test_sparkling_cells_fill_in(self):
+        from padbot.vision import merge
+        a, b = ["DG.BLH", ".GGGGG"], ["DGBBLH", "GGGGGG"]
+        self.assertEqual(merge(a, b), ["DGBBLH", "GGGGGG"])
+        self.assertIsNone(merge(a, ["DGBRLH", "GGGGGG"]))  # a real change is still a change
