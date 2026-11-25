@@ -14,4 +14,5 @@ struct PanelSpec: Identifiable {
 let panels: [PanelSpec] = [
     PanelSpec(id: "run", title: "Run", icon: "play") { _ in AnyView(RunPanel()) },
     PanelSpec(id: "safety", title: "Safety", icon: "lock.shield") { _ in AnyView(SafetyPanel()) },
+    PanelSpec(id: "teams", title: "Teams", icon: "person.3") { _ in AnyView(TeamsPanel()) },
 ]
