@@ -5,6 +5,7 @@
   board PNG                      read the board, solve the default goal, save PNG-route.png
   testdrag R1 C1 R2 C2 [--live]  drag one orb between board cells (needs a battle on screen)
   info [PNG] [--update]          name the monster/dungeon on screen from fan data (read-only)
+  coverage [--profile P] [--dungeon NAME [--floor F]]   which enemy mechanics the team counters
   watch                          live board view beside the Mirroring window (read-only)
   run [--live] [--runs N] [--path "Dungeon/Floor" | --uncleared] [--replay DIR]
       [--queue '[{"path": "Dungeon/Floor", "runs": 3}, {"uncleared": true, "runs": 2}]']
@@ -59,6 +60,8 @@ def main(argv=None):
         s.add_argument(a, type=int)
     s.add_argument("--live", action="store_true")
     s = sub.add_parser("info"); s.add_argument("png", nargs="?"); s.add_argument("--update", action="store_true")
+    s = sub.add_parser("coverage"); s.add_argument("--profile", default="profiles/lugner.toml")
+    s.add_argument("--dungeon"); s.add_argument("--floor")
     sub.add_parser("watch")
     s = sub.add_parser("run")
     s.add_argument("--live", action="store_true")
@@ -113,6 +116,27 @@ def main(argv=None):
             m = Mouse(a.live)
             m.focus()
             m.drag(pts)
+        elif a.cmd == "coverage":
+            from . import info, mechanics as M
+            try:
+                db = info.Info()
+            except FileNotFoundError as e:
+                emit("coverage", error=str(e))
+                return
+            cards, unknown = M.team_cards(db, prof.load(ROOT / a.profile))
+            cov = M.team(cards)
+            out = {"team": {k: v["level"] for k, v in cov.items()}, "by": cov, "unknown": unknown,
+                   "rules": M.rules(cov), "dungeon": None, "rows": []}
+            if a.dungeon:
+                found = M.dungeon(db, a.dungeon, a.floor)
+                if found is None:
+                    out["error"] = f"No dungeon named '{a.dungeon}' in the fan data"
+                else:
+                    out["dungeon"], out["rows"] = a.dungeon, M.report(cov, found)
+            for r in out["rows"]:
+                print(f"{r['status']:8} {r['label']}{' (pre-emptive)' if r['preempt'] else ''}: "
+                      + (", ".join(f"slot {b['slot']} {b['detail']}" for b in r["by"]) or r["how"]))
+            emit("coverage", **out)
         elif a.cmd == "info":
             from . import info
             from .ocr import read_text
