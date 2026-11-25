@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds "PAD Bot.app" into build/ and installs a copy in ~/Applications. Needs only the
+# Builds "PAD Bot.app" into build/ and installs a copy in /Applications (~/Applications if that isn't writable). Needs only the
 # Command Line Tools (swiftc). Re-run after changing app/Sources.
 set -e
 cd "$(dirname "$0")/.."
@@ -24,8 +24,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 codesign --force -s - "$APP"
 if [ "$1" != "--no-install" ]; then
-  mkdir -p "$HOME/Applications"
-  rm -rf "$HOME/Applications/PAD Bot.app"
-  cp -R "$APP" "$HOME/Applications/"
-  echo "Installed ~/Applications/PAD Bot.app"
+  DEST=/Applications
+  [ -w "$DEST" ] || { DEST="$HOME/Applications"; mkdir -p "$DEST"; }
+  rm -rf "$DEST/PAD Bot.app" "$HOME/Applications/PAD Bot.app"  # one copy only, so Spotlight finds the current one
+  cp -R "$APP" "$DEST/"
+  echo "Installed $DEST/PAD Bot.app"
 fi
