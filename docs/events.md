@@ -21,6 +21,7 @@ other line in the log. Emit new events with `padbot.events.emit(type, **fields)`
 | `cleared` | `count`, `runs` (both across the whole queue) | when a rewards screen is left |
 | `done` | `cleared` | the whole queue finished |
 | `info` | `monster` (`no`, `name`, `leader`, `active`, `awakenings`, `keywords`) or null, `dungeon` (`name`, `floors`, `floor`: stamina, battles, enemies) or null, `updated`; or `error` | `padbot info`: read-only lookup of the screen against DadGuide NA data |
+| `coverage` | `team` ({key: full/partial}), `by`, `unknown` (slots not found in fan data), `rules` ({key: [slots]}), `dungeon`, `rows` (`key`, `label`, `status`: gap/partial/manage/full, `preempt`, `by`, `how`, `seen`); or `error` | `padbot coverage`: the team's counters against a dungeon's mechanics (padbot/mechanics.py) |
 | `stop` | `reason` | any stop: safety, error, or the Stop button (SIGINT) |
 
 Every event also has `t` (Unix time).

@@ -27,6 +27,7 @@ enum Snapshot {
         bot.handle(#"@ev {"type":"run","t":1795500200.0,"target":"uncleared: Genie of the Lamp","result":"stopped","seconds":48.0,"stamina":[570,585],"coins":null,"drops":null,"reason":"Stop word on screen: 'continue?'"}"#)
         bot.running = true
         InfoLookup.shared.handle(InfoLookup.sample)
+        CoverageCheck.shared.handle(CoverageCheck.sample)
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         for p in panels {
             save(p.view(bot).environmentObject(bot).padding().frame(width: 520, height: 600).background(Color(nsColor: .windowBackgroundColor)), "\(dir)/\(p.id).png")
