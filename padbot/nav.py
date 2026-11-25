@@ -32,9 +32,10 @@ def find(lines, label, exact=False, min_y=0):
     return best[1] if best[0] >= 0.8 else None
 
 
-def stop_word(lines):
+def stop_word(lines, extra=()):
+    """First stop word on screen. `extra` adds the user's own words (app Safety settings)."""
     text = " ".join(norm(t) + ("?" if t.strip().endswith("?") else "") for t, _, _ in lines)
-    return next((w for w in STOP_WORDS if norm(w) + ("?" if w.endswith("?") else "") in text), None)
+    return next((w for w in STOP_WORDS + tuple(extra) if norm(w) + ("?" if w.endswith("?") else "") in text), None)
 
 
 CODE = re.compile(r"^\d+-\d+(-\d+)?$")  # "4-6" is a dungeon, "4-6-5" a floor

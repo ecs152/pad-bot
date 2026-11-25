@@ -96,3 +96,22 @@ class RealScreens(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExtraStopWords(unittest.TestCase):
+    def test_user_words_stop(self):
+        lines = [("Rank Up Bonus", 1, (0, 0, 10, 10))]
+        self.assertIsNone(nav.stop_word(lines))
+        self.assertEqual(nav.stop_word(lines, ("rank up",)), "rank up")
+
+
+class Events(unittest.TestCase):
+    def test_emit_is_one_json_line(self):
+        import io, json, contextlib
+        from padbot.events import PREFIX, emit
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            emit("cleared", count=1, runs=3)
+        line = buf.getvalue()
+        self.assertTrue(line.startswith(PREFIX) and line.count("\n") == 1)
+        self.assertEqual(json.loads(line[len(PREFIX):])["count"], 1)

@@ -18,6 +18,7 @@ import cv2
 from . import profile as prof
 from . import vision
 from .mac import Mouse, Stop, capture, find_window, to_point
+from .events import emit
 from .run import Bot
 from .solver import solve
 
@@ -60,6 +61,7 @@ def main(argv=None):
     s.add_argument("--uncleared", action="store_true", help="play floors without a Clear! badge, top to bottom")
     s.add_argument("--profile", default="profiles/lugner.toml")
     s.add_argument("--replay", help="folder of PNGs to loop through instead of the live window")
+    s.add_argument("--stop-words", default="", help="extra comma-separated stop words")
     a = ap.parse_args(argv)
     c = cfg()
 
@@ -115,12 +117,21 @@ def main(argv=None):
                 c.setdefault("nav", {}).update(uncleared=True, path=[])
             if a.path:
                 c.setdefault("nav", {})["path"] = [x.strip() for x in a.path.split("/")]
+            words = [w.strip() for w in a.stop_words.split(",") if w.strip()]
+            c.setdefault("safety", {}).setdefault("stop_words", []).extend(words)
+            emit("start", live=a.live, runs=a.runs, path=c.get("nav", {}).get("path", []),
+                 uncleared=bool(a.uncleared))
             bot = Bot(c, prof.load(ROOT / a.profile), Mouse(a.live), grab)
             bot.run(runs=a.runs,
                     max_iterations=(len(files) if a.replay else None))
     except Stop as e:
         print("STOPPED:", e)
+        emit("stop", reason=str(e))
         sys.exit(1)
+    except KeyboardInterrupt:  # the app's Stop button sends SIGINT; drag() releases the mouse in `finally`
+        print("STOPPED: by user")
+        emit("stop", reason="Stopped by user")
+        sys.exit(130)
 
 
 if __name__ == "__main__":

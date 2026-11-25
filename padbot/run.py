@@ -9,6 +9,7 @@ from pathlib import Path
 import cv2
 
 from . import nav
+from .events import emit
 from . import profile as prof
 from . import vision
 from .mac import Stop, capture, notify, to_point
@@ -25,7 +26,8 @@ class Bot:
         n = cfg.get("nav", {})
         self.path, self.helper = list(n.get("path", [])), n.get("helper", "You")
         self.new_only = bool(n.get("uncleared", False))
-        bad = [x for x in self.path + [self.helper] if nav.stop_word([(x + "?", 1, (0, 0, 0, 0))])]
+        self.extra_stop = tuple(w.lower() for w in cfg.get("safety", {}).get("stop_words", []))
+        bad = [x for x in self.path + [self.helper] if nav.stop_word([(x + "?", 1, (0, 0, 0, 0))], self.extra_stop)]
         if bad:
             raise Stop(f"Refusing to tap labels containing stop words: {bad}")
         self.turn, self.ready_at = 0, {}
@@ -54,7 +56,7 @@ class Bot:
 
     def read(self, img):
         lines = self.ocr(img)
-        w = nav.stop_word(lines)
+        w = nav.stop_word(lines, self.extra_stop)
         if w:
             self.fail(img, f"Stop word on screen: '{w}'")
         return lines
@@ -134,6 +136,7 @@ class Bot:
         print(f"  skill slot {slot}")
         self.tap_px(img, bounds, fx * w, fy * h)  # one-tap skills: the tap fires it; uncharged does nothing
         fired = self.settled_change(before)
+        emit("skill", slot=slot, fired=fired, turn=self.turn)
         cd = int(self.profile.get("cooldowns", {}).get(str(slot), 1))
         self.ready_at[slot] = self.turn + (cd if fired else 1)
         return fired
@@ -198,6 +201,7 @@ class Bot:
         self.mouse.drag(pts)
         self.turn += 1
         self.last_progress = time.time()
+        emit("turn", turn=self.turn, board=board, route=path, goal=goal, mechanics=mech)
         with open(self.log_path, "a") as f:
             f.write(json.dumps({"t": time.time(), "turn": self.turn, "mechanics": mech, "goal": goal,
                                 "board": board, "route": path}) + "\n")
@@ -217,12 +221,15 @@ class Bot:
                                                              self.new_only)[0] not in ("results", "unknown"):
                 result_taps, cleared = 0, cleared + 1  # rewards screen left: count before tapping anything else
                 print(f"cleared {cleared}/{runs}")
+                emit("cleared", count=cleared, runs=runs)
                 if cleared >= runs:
                     notify(f"Done: {cleared} clear(s)")
+                    emit("done", cleared=cleared)
                     return cleared
             if screen is None:
                 screen, tapped = self.navigate(img)
             print(f"screen: {screen}")
+            emit("screen", name=screen)
             if screen == "unknown":  # loading screens land here too: wait, never swipe
                 if time.time() - last_known > self.cfg["unknown_stop_seconds"]:
                     self.fail(img, "Unrecognised screen")
