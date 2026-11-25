@@ -240,7 +240,7 @@ class Bot:
         """Team clearer: counter enemy abilities, else fire the first ready Lügner (left to right),
         then keep or rebuild the cross; stall with any match when a needed counter isn't ready."""
         m = self.cfg["match"]
-        img, _, board = self.stable_board()  # let the last move's cascade finish before judging the board
+        img, _, _ = self.stable_board()  # let the last move's cascade finish before judging the board
         if img is None:
             return
         mech = [n for n, t in self.t["icons"].items() if vision.find(img, t, m["icon"])]
@@ -250,9 +250,7 @@ class Bot:
         if counters and not any([self.use_skill(s) for s in counters]):
             print("  counter not ready: skipping Lügner, stalling")
             goal = fallback
-        elif solve(board, goal, max_steps=self.profile.get("max_steps", 12)) is not None:
-            print("  goal reachable without a skill: saving Lügner")  # e.g. the last skill's cross is still there
-        else:
+        else:  # one Lügner every turn it can: a fresh cross makes the match easy (user's call)
             next((s for s in first_of if self.use_skill(s)), None)
         img, bounds, board = self.stable_board()
         if img is None:
