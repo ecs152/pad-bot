@@ -149,10 +149,11 @@ class Bot:
                 return
         self.fail(img, f"Tapped '{label}' but the screen didn't change")
 
-    def scroll(self, img, bounds):
+    def scroll(self, img, bounds, up=False):
         h, w = img.shape[:2]
-        pts = [to_point(w / 2, h * f, w, bounds) for f in (0.75, 0.6, 0.45, 0.4)]
-        print("  scroll")
+        fs = (0.75, 0.6, 0.45, 0.4)
+        pts = [to_point(w / 2, h * f, w, bounds) for f in (fs[::-1] if up else fs)]
+        print("  scroll up" if up else "  scroll")
         self.mouse.drag(pts, step_s=0.15)
         self.last_progress = time.time()
 
@@ -272,10 +273,11 @@ class Bot:
             else:
                 last_known = time.time()
             if screen == "list" and not tapped:
-                if scrolls >= self.cfg.get("nav", {}).get("max_scrolls", 6):
+                n = self.cfg.get("nav", {}).get("max_scrolls", 6)
+                if scrolls >= 3 * n:  # n down to the bottom, then 2n up past where we started
                     self.fail(img, f"Couldn't find {self.path} after {scrolls} scrolls")
                 scrolls += 1
-                self.scroll(img, bounds)
+                self.scroll(img, bounds, up=scrolls > n)
             elif tapped:
                 scrolls = 0
             if time.time() - self.last_progress > self.cfg["stall_stop_seconds"]:
