@@ -27,6 +27,7 @@ struct Profile: Codable, Equatable {
     var name = ""
     var notes: String?
     var max_steps: Int?
+    var leader_skill: String?
     var slots: [String: String]?
     var `default`: Defaults?
     var cooldowns: [String: Int]?
@@ -138,6 +139,8 @@ struct TeamsPanel: View {
             Section {
                 TextField("Name", text: $store.profile.name)
                 TextField("Notes", text: opt($store.profile.notes, ""), axis: .vertical).lineLimit(1...3)
+                TextField("Leader skill name", text: opt($store.profile.leader_skill, ""),
+                          prompt: Text("Finds this team on the Enter screen"))
                 Stepper("Longest drag: \(store.profile.max_steps ?? 12) steps",
                         value: opt($store.profile.max_steps, 12), in: 1...30)
             }

@@ -67,7 +67,7 @@ def _check_goal(g, where, errs):
 def validate(p):
     """Problems that would make the bot misbehave, as readable strings. Empty list = OK to save."""
     errs = []
-    for k in set(p) - {"name", "notes", "max_steps", "slots", "default", "cooldowns", "on"}:
+    for k in set(p) - {"name", "notes", "max_steps", "leader_skill", "slots", "default", "cooldowns", "on"}:
         errs.append(f"unknown setting '{k}'")
     if not str(p.get("name", "")).strip():
         errs.append("name: required")
@@ -116,7 +116,7 @@ def _val(v):
 
 def dumps(p):
     """TOML for a validated profile. Comments aren't kept: put notes in `notes` and slot names in [slots]."""
-    out = [f"{_key(k)} = {_val(p[k])}" for k in ("name", "notes", "max_steps") if k in p]
+    out = [f"{_key(k)} = {_val(p[k])}" for k in ("name", "notes", "max_steps", "leader_skill") if k in p]
     for t in ("slots", "default", "cooldowns"):
         if t in p:
             out += ["", f"[{t}]"] + [f"{json.dumps(k) if t != 'default' else k} = {_val(v)}" for k, v in p[t].items()]

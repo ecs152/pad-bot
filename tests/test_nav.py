@@ -38,9 +38,27 @@ class Decide(unittest.TestCase):
                          ("list", "Aither Desert"))  # the tab bar alone doesn't make it home
         self.assertEqual(nav.decide(home, PATH, "You", 1440)[:2], ("home", "Dungeon"))
 
+    def test_mail_box_goes_to_dungeons(self):
+        mail = lines(("Back", 338), ("Mail Box/Inuites", 339), ("Receive All", 1221), ("Dungeon", 1338), ("Machine", 1339))
+        self.assertEqual(nav.decide(mail, [], "You", 1440, new_only=True)[:2], ("home", "Dungeon"))
+
+    def test_stage_list_without_codes_picks_a_stage_tab(self):
+        l = lines(("Back", 339), ("Stage Dungeons", 339), ("Arena 2", 403), ("Stage", 929), ("Stage", 998),
+                  ("Dungeon", 1338), ("Machine", 1339))
+        k, label, box = nav.decide(l, [], "You", 1440, new_only=True)
+        self.assertEqual((k, label, box[1]), ("filter", "Stage", 929))
+
+    def test_dungeon_menu_taps_stage(self):
+        l = lines(("Special", 656), ("Stage", 801), ("Story", 990), ("Dungeon", 1338), ("Machine", 1339))
+        self.assertEqual(nav.decide(l, [], "You", 1440, new_only=True)[:2], ("menu", "Stage"))
+
+    def test_menu_beats_tab_bar(self):
+        menu = lines(("Stage Dungeons", 500), ("Dungeon", 1338), ("Machine", 1339))
+        self.assertEqual(nav.decide(menu, [], "You", 1440, new_only=True)[:2], ("menu", "Stage Dungeons"))
+
     def test_uncleared_mode_picks_normal_dungeons_in_menu(self):
-        menu = lines(("Normal Dungeons", 500), ("Special Dungeons", 700))
-        self.assertEqual(nav.decide(menu, [], "You", 1440, new_only=True)[:2], ("menu", "Normal Dungeons"))
+        menu = lines(("Stage Dungeons", 500), ("Special Dungeons", 700))
+        self.assertEqual(nav.decide(menu, [], "You", 1440, new_only=True)[:2], ("menu", "Stage Dungeons"))
 
     def test_magic_stone_still_stops_off_the_title_screen(self):
         shop = lines(("START", 300), ("Buy 100 Magic Stones", 1258))  # START alone isn't the title screen
