@@ -93,11 +93,17 @@ def decide(lines, path, helper, height, new_only=False, skip=()):
         if find(lines, "Back", exact=True) and any(CODE.match(t.strip()) for t, _, _ in lines):
             return "list", None, None  # dungeon list, nothing uncleared in view: scroll
         return "unknown", None, None
+    title = [l for l in lines if 0.2 * height < l[2][1] < 0.27 * height and norm(l[0]) != "back"]
+    floor_codes = any(CODE.match(t.strip()) and t.count("-") == 2 for t, _, _ in lines)
+    if len(path) > 1 and title and floor_codes and has("Back", exact=True) and not find(title, path[0]):
+        return back(lines)  # another dungeon's floor list (a queue moved on): back out to the dungeon list
     for label in reversed(path):  # deepest name first: on a floor list the floor beats the dungeon header
         box = find(lines, label, min_y=0.27 * height)  # skip the title bar, which repeats the dungeon name
         if box:
             return "list", label, box
     if find(lines, "Back", exact=True) and find(lines, "Battles", exact=True):
         return "list", None, None  # a floor list without our target on it yet: scroll
-    # shortcut: only floor lists (they show "Battles") scroll; teach dungeon-list markers when we see one
+    if find(lines, "Back", exact=True) and any(CODE.match(t.strip()) and t.count("-") == 1 for t, _, _ in lines):
+        return "list", None, None  # dungeon list ("4-6" codes) without our dungeon in view: scroll
+    # shortcut: lists only scroll down, so a dungeon above the visible part is never found; add scroll-up if that bites
     return "unknown", None, None

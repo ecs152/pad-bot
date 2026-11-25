@@ -152,7 +152,41 @@ class Pipeline(unittest.TestCase):
         turn = next(e for e in ev if e["type"] == "turn")
         self.assertEqual((turn["turn"], turn["board"], len(turn["route"])), (1, BOARD, 3))
         self.assertIn({"type": "cleared", "count": 1, "runs": 1}, [{k: v for k, v in e.items() if k != "t"} for e in ev])
-        self.assertIn("done", [e["type"] for e in ev])
+        rec = next(e for e in ev if e["type"] == "run")
+        self.assertEqual((rec["result"], rec["target"]), ("cleared", "uncleared: ?"))
+        hist = [json.loads(l) for l in (run.LOGS / "history.jsonl").read_text().splitlines()]
+        self.assertEqual([h["result"] for h in hist], ["cleared"])
+
+    def test_queue_moves_to_another_dungeon(self):
+        """Item 1 cleared on Aither Desert's floor list; item 2 is in Sky Garden: Back, then the dungeon."""
+        m = RecMouse()
+        def floors(title, *rows):  # title bar at y=180 (0.2-0.27 of H=800), floors below
+            img = np.full((H, W, 3), 60, np.uint8)
+            TEXT[id(img)] = [("Back", 1.0, (10, 180, 60, 30)), (title, 1.0, (100, 180, 200, 30))] + [
+                (t, 1.0, (100, 300 + 40 * i, 200, 30)) for i, t in enumerate(rows)]
+            FRAMES.append(img)
+            return img
+        a = floors("Aither Desert", "4-6-2", "Beyond the Desert", "Battles")
+        d = floors("Stage 4", "4-6", "Aither Desert", "4-7", "Sky Garden")
+        bot = self.bot([a, a, d, d, d, floors("Sky Garden", "4-7-1", "Cloud Floor", "Battles")], m)
+        bot.set_target(["Sky Garden", "Cloud Floor"])
+        bot.run(runs=1, max_iterations=2)
+        self.assertEqual(len(m.taps), 2, "Back on the old floor list, then Sky Garden")
+        self.assertEqual(m.taps[1], to_point(200, 300 + 40 * 3 + 15, W, (100, 50, W / 2, H / 2)))
+
+    def test_queue_labels_checked_before_any_tap(self):
+        bot = self.bot([], RecMouse())
+        with self.assertRaises(Stop):
+            bot.set_target(["Shop", "Buy Magic Stone"])
+
+    def test_stamina_and_rewards_read(self):
+        top = [("578/585", 1, (300, 275, 80, 20)), ("STA", 1, (250, 275, 40, 20)), ("swipe 5/22", 1, (0, 550, 80, 20))]
+        self.assertEqual(run.stamina(top, 1440), (578, 585))
+        self.assertIsNone(run.stamina(top[2:], 1440))
+        res = [("Coins Acquired", 1, (60, 490, 150, 20)), ("6,304", 1, (400, 492, 60, 20)),
+               ("Monster(s) Acquired", 1, (60, 690, 150, 20)), ("None", 1, (300, 780, 50, 20))]
+        self.assertEqual(run.rewards(res), (6304, []))
+        self.assertEqual(run.rewards(res[:3]), (6304, None))
 
     def test_no_drag_if_board_changed(self):
         m = RecMouse()

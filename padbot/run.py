@@ -3,6 +3,7 @@
 Every tap is decided on a fresh capture: navigation re-reads the screen right before tapping, battle
 re-reads the board right before dragging. Stop dialogs (templates/stop or stop words) halt at once."""
 import json
+import re
 import time
 from pathlib import Path
 
@@ -24,16 +25,41 @@ class Bot:
         self.cfg, self.profile, self.mouse, self.grab, self.ocr = cfg, profile, mouse, grab, ocr
         self.t = {k: vision.load(k) for k in ("screens", "buttons", "icons", "stop", "orbs")}
         n = cfg.get("nav", {})
-        self.path, self.helper = list(n.get("path", [])), n.get("helper", "You")
-        self.new_only = bool(n.get("uncleared", False))
+        self.helper = n.get("helper", "You")
         self.skip = tuple(n.get("skip", []))
         self.extra_stop = tuple(w.lower() for w in cfg.get("safety", {}).get("stop_words", []))
-        bad = [x for x in self.path + [self.helper] if nav.stop_word([(x + "?", 1, (0, 0, 0, 0))], self.extra_stop)]
-        if bad:
-            raise Stop(f"Refusing to tap labels containing stop words: {bad}")
+        self.set_target(n.get("path", []), n.get("uncleared", False))
         self.turn, self.ready_at = 0, {}
+        self.stamina, self.coins, self.drops, self.floor = None, None, None, None
+        self.run_t0 = time.time()
+        self.done_before, self.total_runs = 0, None  # queue progress, for the `cleared` event
         LOGS.mkdir(exist_ok=True)
         self.log_path = LOGS / time.strftime("run-%Y%m%d-%H%M%S.jsonl")
+
+    def set_target(self, path, uncleared=False):
+        """What to play next: names to tap through, or uncleared floors. Refuses labels with stop words."""
+        path = list(path)
+        bad = [x for x in path + [self.helper] if nav.stop_word([(x + "?", 1, (0, 0, 0, 0))], self.extra_stop)]
+        if bad:
+            raise Stop(f"Refusing to tap labels containing stop words: {bad}")
+        self.path, self.new_only = path, bool(uncleared)
+
+    @property
+    def target(self):
+        return "/".join(self.path) if self.path else f"uncleared: {self.floor or '?'}"
+
+    def record(self, result, reason=None):
+        """One run in logs/history.jsonl (the app's History tab) and a `run` event."""
+        rec = {"t": round(time.time(), 3), "target": self.target, "result": result,
+               "seconds": round(time.time() - self.run_t0, 1),
+               "stamina": list(self.stamina) if self.stamina else None, "coins": self.coins, "drops": self.drops}
+        if reason:
+            rec["reason"] = reason
+        LOGS.mkdir(exist_ok=True)
+        with open(LOGS / "history.jsonl", "a") as f:
+            f.write(json.dumps(rec) + "\n")
+        emit("run", **{k: v for k, v in rec.items() if k != "t"})
+        self.coins, self.drops, self.run_t0 = None, None, time.time()
 
     # --- perception -------------------------------------------------------
     def frame(self):
@@ -60,6 +86,14 @@ class Bot:
         w = nav.stop_word(lines, self.extra_stop)
         if w:
             self.fail(img, f"Stop word on screen: '{w}'")
+        st = stamina(lines, img.shape[0])
+        if st and st != self.stamina:
+            self.stamina = st
+            emit("stamina", now=st[0], max=st[1])
+        if nav.find(lines, "Completion Reward"):
+            coins, drops = rewards(lines)
+            self.coins = coins if coins is not None else self.coins  # coins count up: keep the last reading
+            self.drops = drops if drops is not None else self.drops
         return lines
 
     def fail(self, img, msg):
@@ -94,6 +128,8 @@ class Bot:
             return kind2, False
         x, y, w, h = box
         print(f"  {kind}: tap '{label}'")
+        if kind == "list" and self.new_only and label != "Back":
+            self.floor = label
         self.tap_px(img, bounds, x + w / 2, y + h / 2)
         if kind == "results":
             time.sleep(1.5)  # rewards fill in over several taps on the same screen; the loop caps re-taps
@@ -222,10 +258,9 @@ class Bot:
                                                              self.new_only, self.skip)[0] not in ("results", "unknown"):
                 result_taps, cleared = 0, cleared + 1  # rewards screen left: count before tapping anything else
                 print(f"cleared {cleared}/{runs}")
-                emit("cleared", count=cleared, runs=runs)
+                self.record("cleared")
+                emit("cleared", count=self.done_before + cleared, runs=self.total_runs or runs)
                 if cleared >= runs:
-                    notify(f"Done: {cleared} clear(s)")
-                    emit("done", cleared=cleared)
                     return cleared
             if screen is None:
                 screen, tapped = self.navigate(img)
@@ -249,6 +284,7 @@ class Bot:
                 self.battle_turn(img)
             elif screen == "enter" and tapped:
                 self.turn, self.ready_at = 0, {}  # new dungeon run: skills start fresh
+                self.run_t0 = time.time()
             if screen == "results" and tapped:
                 result_taps += 1
                 if result_taps > 8:
@@ -256,3 +292,29 @@ class Bot:
 
             time.sleep(self.cfg["poll_seconds"])
         return cleared
+
+
+STAMINA = re.compile(r"(\d{1,4})\s*/\s*(\d{1,4})\s*$")
+
+
+def stamina(lines, height):
+    """(now, max) from the top bar's "578/585" next to STA, or None. Other "a/b" text sits lower."""
+    for t, _, (x, y, w, h) in lines:
+        m = STAMINA.search(t)
+        if m and 0.15 * height < y < 0.22 * height and int(m[1]) <= int(m[2]) * 3:  # stamina can overfill
+            return int(m[1]), int(m[2])
+    return None
+
+
+def rewards(lines):
+    """(coins, drops) from the Completion Reward screen. drops: [] when it reads "None", else None
+    (monster drops are icons, not text). shortcut: no drop names; add icon matching if wanted."""
+    coins = drops = None
+    for t, _, (x, y, w, h) in lines:
+        if nav.norm(t) == "coins acquired":
+            row = [o for o, _, b in lines if abs(b[1] - y) < 15 and re.fullmatch(r"[\d,]+", o.strip())]
+            coins = int(row[0].replace(",", "")) if row else coins
+        if nav.norm(t).startswith("monsters acquired"):
+            if any(nav.norm(o) == "none" and b[1] > y for o, _, b in lines):
+                drops = []
+    return coins, drops
