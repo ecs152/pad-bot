@@ -1,33 +1,31 @@
-# Team profile, read off your team on 2026-11-24 (NA).
-# Slots: 1 Lügner (leader), 2 Lügner, 3 Linie, 4 Gunsword (Eruption Slash), 5 absorb voider, 6 Lügner (friend).
-# Each turn: icons seen (templates/icons/<name>.png) pick [on.<name>] rules, merged over [default].
-#   first_of = fire the first of these skills that is charged (board changes), then stop
-#   skills   = fire all of these that are charged
-#   goal     = crosses = {D = 1}, link = {D = 5}, min_combos = N, avoid = ["R"]
-
 name = "Lügner"
-max_steps = 15          # longest drag; 7-combo routes run 12-14 steps
+notes = "Read off the team on 2026-11-24 (NA). Leader: [No Skyfall Combos] 150x ATK, halves damage, 15,000,000 damage when a skill is used. Lügner active (3 turns): removes locks, makes an enhanced dark cross, voids combo absorb and damage void for 1 turn, so one Lügner per turn, then keep the cross. Combo absorb and damage void need no extra counter; they are listed so the icons are known once captured."
+max_steps = 15
+
+[slots]
+"1" = "Lügner (leader)"
+"2" = "Lügner"
+"3" = "Linie"
+"4" = "Gunsword (Eruption Slash)"
+"5" = "Absorb voider (voids attribute & damage absorb 2 turns, destroys 1 shield)"
+"6" = "Lügner (friend)"
 
 [default]
-# Leader: [No Skyfall Combos] 150x ATK, halves damage, 15,000,000 damage when a skill is used.
-# Lügner active (3 turns): removes locks, makes an enhanced dark cross, voids combo absorb
-# and damage void for 1 turn. So one Lügner per turn, then keep the cross.
 first_of = [1, 2, 6]
 goal = { crosses = { D = 1 } }
-fallback_goal = { min_combos = 1 }   # no Lügner charged: stall with any match so skills charge
+fallback_goal = { min_combos = 1 }
 
-[cooldowns]             # turns between uses; the bot only taps a portrait once its cooldown is up
+[cooldowns]
 "1" = 3
 "2" = 3
 "6" = 3
 
-# combo absorb ("absorbs attacks of N combos or fewer") and damage void need no extra counter:
-# the Lügner fired each turn voids both. Listed so the icons are known once captured.
 [on.combo_absorb]
+
 [on.damage_void]
 
 [on.attribute_absorb]
-skills = [5]            # voids attribute & damage absorption for 2 turns, destroys 1 shield
+skills = [5]
 
 [on.damage_absorb]
 skills = [5]

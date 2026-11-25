@@ -8,6 +8,7 @@ struct RunPanel: View {
     @AppStorage("practice") private var practice = true
     @AppStorage("maxRuns") private var maxRuns = 20
     @AppStorage("extraStopWords") private var extraStopWords = ""
+    @AppStorage("profile") private var profile = "profiles/lugner.toml"
     @State private var confirmLive = false
 
     var body: some View {
@@ -20,6 +21,9 @@ struct RunPanel: View {
                 .pickerStyle(.segmented)
                 if !uncleared {
                     TextField("Dungeon/Floor", text: $path, prompt: Text("Dungeon name/Floor name"))
+                }
+                Picker("Team", selection: $profile) {
+                    ForEach(teamFiles, id: \.self) { Text(($0 as NSString).lastPathComponent.replacingOccurrences(of: ".toml", with: "")).tag($0) }
                 }
                 Stepper("Runs: \(min(runs, maxRuns))", value: $runs, in: 1...max(1, maxRuns))
                 Toggle("Practice run (reads and plans, no taps)", isOn: $practice)
@@ -53,8 +57,14 @@ struct RunPanel: View {
         }
     }
 
+    private var teamFiles: [String] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: ProfileStore.dir.path)) ?? []
+        return Array(Set(names.filter { $0.hasSuffix(".toml") }.map { "profiles/" + $0 } + [profile])).sorted()
+    }
+
     private func start() {
         var args = uncleared ? ["--uncleared"] : ["--path", path]
+        args += ["--profile", profile]
         args += ["--runs", String(min(runs, maxRuns))]
         if !practice { args.append("--live") }
         if !extraStopWords.isEmpty { args += ["--stop-words", extraStopWords] }
