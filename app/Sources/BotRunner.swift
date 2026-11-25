@@ -54,6 +54,15 @@ final class BotRunner: ObservableObject {
 
     func start(args: [String]) {
         guard !running else { return }
+        if !args.contains("--replay") {  // replays read saved images: no screen or mouse needed
+            let perms = Permissions.shared
+            perms.refresh()
+            if !perms.screen || (args.contains("--live") && !perms.accessibility) {
+                perms.ensure()
+                stopReason = "PAD Bot needs permission first (Screen Recording, and Accessibility for live runs)."
+                return
+            }
+        }
         let p = Process()
         p.executableURL = Self.root.appendingPathComponent(".venv/bin/python")
         p.arguments = ["-u", "-m", "padbot", "run"] + args

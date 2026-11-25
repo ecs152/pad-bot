@@ -32,6 +32,8 @@ enum Snapshot {
         for p in panels {
             save(p.view(bot).environmentObject(bot).padding().frame(width: 520, height: 600).background(Color(nsColor: .windowBackgroundColor)), "\(dir)/\(p.id).png")
         }
+        Permissions.shared.screen = false  // sheet as a first launch sees it (preview only, nothing is asked)
+        save(PermissionsSheet().frame(width: 520, height: 600).background(Color(nsColor: .windowBackgroundColor)), "\(dir)/permissions.png")
     }
 
     @MainActor

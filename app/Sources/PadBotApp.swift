@@ -31,6 +31,7 @@ struct PadBotApp: App {
 
 struct MainView: View {
     @EnvironmentObject var bot: BotRunner
+    @ObservedObject var perms = Permissions.shared
 
     var body: some View {
         TabView {
@@ -39,5 +40,7 @@ struct MainView: View {
             }
         }
         .padding()
+        .sheet(isPresented: $perms.showSheet) { PermissionsSheet() }
+        .onAppear { perms.ensure() }  // macOS prompts on first launch, not mid-run
     }
 }

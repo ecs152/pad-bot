@@ -31,7 +31,18 @@ def find_window(retry=True):
         subprocess.run(["osascript", "-e", f'tell application "{APP}" to activate'], check=False)
         time.sleep(1.5)
         return find_window(retry=False)
+    if not Quartz.CGPreflightScreenCaptureAccess():  # without it macOS hides window titles, so the match above fails
+        raise Stop("Screen Recording permission is missing for PAD Bot (or the terminal running the bot). "
+                   "Turn it on in System Settings > Privacy & Security > Screen & System Audio Recording.")
     raise Stop(f"{APP} window not found. Open {APP} and keep the window visible.")
+
+
+def accessibility_ok():
+    """True if this process may post mouse events. Without it macOS drops them silently."""
+    import ctypes
+    ax = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")
+    ax.AXIsProcessTrusted.restype = ctypes.c_bool
+    return ax.AXIsProcessTrusted()
 
 
 def capture():
@@ -75,6 +86,9 @@ def to_pixel(gx, gy, img_w, bounds):
 class Mouse:
     def __init__(self, live=False):
         self.live = live
+        if live and not accessibility_ok():
+            raise Stop("Accessibility permission is missing for PAD Bot (or the terminal running the bot), so taps "
+                       "would do nothing. Turn it on in System Settings > Privacy & Security > Accessibility.")
 
     def _check_kill(self):
         if not self.live:

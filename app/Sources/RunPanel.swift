@@ -5,7 +5,7 @@ struct RunPanel: View {
     @AppStorage("uncleared") private var uncleared = true
     @AppStorage("path") private var path = ""
     @AppStorage("runs") private var runs = 1
-    @AppStorage("practice") private var practice = true
+    @State private var practice = true  // not remembered: every launch starts in practice mode
     @AppStorage("maxRuns") private var maxRuns = 20
     @AppStorage("extraStopWords") private var extraStopWords = ""
     @AppStorage("profile") private var profile = "profiles/lugner.toml"
@@ -45,6 +45,9 @@ struct RunPanel: View {
                 Circle().fill(bot.running ? (bot.live ? Color.red : Color.orange) : Color.secondary)
                     .frame(width: 8, height: 8)
                 Text(bot.status).font(.callout).lineLimit(2)
+                if !bot.running && bot.status.localizedCaseInsensitiveContains("permission") {
+                    Button("Fix permissions") { Permissions.shared.ensure() }
+                }
             }
             .controlSize(.large)
 
