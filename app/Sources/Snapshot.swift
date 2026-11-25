@@ -16,7 +16,7 @@ enum Snapshot {
         sample.forEach { bot.handle($0) }
         bot.handle(#"@ev {"type":"start","live":false,"runs":3}"#)
         bot.handle(#"@ev {"type":"screen","name":"battle_ready"}"#)
-        bot.handle(#"@ev {"type":"turn","turn":2,"board":[],"route":[]}"#)
+        bot.handle(#"@ev {"type":"turn","turn":2,"board":["BDGBHB","DDDBDL","BDLLDR","RRDDBH","BRBLGH"],"route":[[2,4],[3,4],[3,5]],"goal":{"crosses":{"D":1}},"mechanics":[]}"#)
         bot.handle(#"@ev {"type":"cleared","count":1,"runs":3}"#)
         bot.running = true
         InfoLookup.shared.handle(InfoLookup.sample)

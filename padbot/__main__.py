@@ -5,6 +5,7 @@
   board PNG                      read the board, solve the default goal, save PNG-route.png
   testdrag R1 C1 R2 C2 [--live]  drag one orb between board cells (needs a battle on screen)
   info [PNG] [--update]          name the monster/dungeon on screen from fan data (read-only)
+  watch                          live board view beside the Mirroring window (read-only)
   run [--live] [--runs N] [--path "Dungeon/Floor" | --uncleared] [--replay DIR]
 """
 import argparse
@@ -56,6 +57,7 @@ def main(argv=None):
         s.add_argument(a, type=int)
     s.add_argument("--live", action="store_true")
     s = sub.add_parser("info"); s.add_argument("png", nargs="?"); s.add_argument("--update", action="store_true")
+    sub.add_parser("watch")
     s = sub.add_parser("run")
     s.add_argument("--live", action="store_true")
     s.add_argument("--runs", type=int, default=1, help="clears before stopping")
@@ -120,6 +122,9 @@ def main(argv=None):
                 return
             img = cv2.imread(a.png) if a.png else capture()[0]  # capture only: no Mouse, never taps
             emit("info", updated=db.updated, **db.lookup([t for t, _, _ in read_text(img)]))
+        elif a.cmd == "watch":
+            from .boardview import watch
+            watch()
         elif a.cmd == "run":
             grab = capture
             if a.replay:
