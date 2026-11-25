@@ -18,4 +18,5 @@ let panels: [PanelSpec] = [
     PanelSpec(id: "board", title: "Board", icon: "square.grid.3x3") { _ in AnyView(BoardPanel()) },
     PanelSpec(id: "queue", title: "Queue", icon: "list.number") { _ in AnyView(QueuePanel()) },
     PanelSpec(id: "history", title: "History", icon: "clock.arrow.circlepath") { _ in AnyView(HistoryPanel()) },
+    PanelSpec(id: "teams", title: "Teams", icon: "person.3") { _ in AnyView(TeamsPanel()) },
 ]

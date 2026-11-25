@@ -19,6 +19,7 @@ struct QueuePanel: View {
     @AppStorage("practice") private var practice = true
     @AppStorage("maxRuns") private var maxRuns = 20
     @AppStorage("extraStopWords") private var extraStopWords = ""
+    @AppStorage("profile") private var profile = "profiles/lugner.toml"  // team picked on the Run tab
     @State private var items: [QueueItem] = []
     @State private var confirmLive = false
 
@@ -123,6 +124,7 @@ struct QueuePanel: View {
         var args = ["--queue", String(decoding: d, as: UTF8.self)]
         if !practice { args.append("--live") }
         if !extraStopWords.isEmpty { args += ["--stop-words", extraStopWords] }
+        args += ["--profile", profile]
         bot.start(args: args)
     }
 }
