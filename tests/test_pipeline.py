@@ -252,6 +252,17 @@ class Pipeline(unittest.TestCase):
                 ocr=lambda img: TEXT.get(id(img), [])).run(max_iterations=2)
         self.assertEqual(len(m.drags), 2)
 
+    def test_list_scrolls_down_then_up_then_stops(self):
+        m = RecMouse()
+        cfg = dict(CFG, nav={"path": ["Aither Desert"], "helper": "You", "max_scrolls": 2})
+        it = itertools.repeat(screen("Back", "Genie of the Lamp", "Battles"))
+        bot = run.Bot(cfg, PROFILE, m, lambda: (next(it), (100, 50, W / 2, H / 2)),
+                      ocr=lambda img: TEXT.get(id(img), []))
+        with self.assertRaises(Stop):
+            bot.run(max_iterations=20)
+        dirs = ["down" if d[0][1] > d[-1][1] else "up" for d in m.drags]  # finger moves up = list scrolls down
+        self.assertEqual(dirs, ["down", "down", "up", "up", "up", "up"])
+
     def test_stall_stops(self):
         m = RecMouse()
         cfg = dict(CFG, stall_stop_seconds=-1)
