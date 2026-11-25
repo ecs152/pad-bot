@@ -4,6 +4,7 @@
   crop PNG KIND NAME X Y W H     save a template crop (pixels) to templates/KIND/NAME.png
   board PNG                      read the board, solve the default goal, save PNG-route.png
   testdrag R1 C1 R2 C2 [--live]  drag one orb between board cells (needs a battle on screen)
+  info [PNG] [--update]          name the monster/dungeon on screen from fan data (read-only)
   run [--live] [--runs N] [--path "Dungeon/Floor" | --uncleared] [--replay DIR]
 """
 import argparse
@@ -54,6 +55,7 @@ def main(argv=None):
     for a in ("r1", "c1", "r2", "c2"):
         s.add_argument(a, type=int)
     s.add_argument("--live", action="store_true")
+    s = sub.add_parser("info"); s.add_argument("png", nargs="?"); s.add_argument("--update", action="store_true")
     s = sub.add_parser("run")
     s.add_argument("--live", action="store_true")
     s.add_argument("--runs", type=int, default=1, help="clears before stopping")
@@ -105,6 +107,19 @@ def main(argv=None):
             m = Mouse(a.live)
             m.focus()
             m.drag(pts)
+        elif a.cmd == "info":
+            from . import info
+            from .ocr import read_text
+            if a.update:
+                info.update()
+                print("saved", info.DB)
+            try:
+                db = info.Info()
+            except FileNotFoundError as e:
+                emit("info", error=str(e))
+                return
+            img = cv2.imread(a.png) if a.png else capture()[0]  # capture only: no Mouse, never taps
+            emit("info", updated=db.updated, **db.lookup([t for t, _, _ in read_text(img)]))
         elif a.cmd == "run":
             grab = capture
             if a.replay:

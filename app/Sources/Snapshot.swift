@@ -19,6 +19,7 @@ enum Snapshot {
         bot.handle(#"@ev {"type":"turn","turn":2,"board":[],"route":[]}"#)
         bot.handle(#"@ev {"type":"cleared","count":1,"runs":3}"#)
         bot.running = true
+        InfoLookup.shared.handle(InfoLookup.sample)
         try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
         for p in panels {
             save(p.view(bot).environmentObject(bot).padding().frame(width: 520, height: 600).background(Color(nsColor: .windowBackgroundColor)), "\(dir)/\(p.id).png")
