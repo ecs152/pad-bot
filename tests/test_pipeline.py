@@ -140,6 +140,20 @@ class Pipeline(unittest.TestCase):
         x, y = vision.cell_centre(f, RECT, 2, 2)
         self.assertEqual(pts[0], to_point(x, y, W, (100, 50, W / 2, H / 2)))
 
+    def test_turn_and_cleared_events(self):
+        import contextlib, io, json
+        from padbot.events import PREFIX
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.bot(itertools.repeat(make_frame(BOARD)), RecMouse()).run(max_iterations=1)
+            r = screen("Completion Reward", "Beyond the Desert")
+            self.bot([r, r, screen("Back", "Genie of the Lamp", "Battles")], RecMouse()).run(runs=1, max_iterations=2)
+        ev = [json.loads(l[len(PREFIX):]) for l in buf.getvalue().splitlines() if l.startswith(PREFIX)]
+        turn = next(e for e in ev if e["type"] == "turn")
+        self.assertEqual((turn["turn"], turn["board"], len(turn["route"])), (1, BOARD, 3))
+        self.assertIn({"type": "cleared", "count": 1, "runs": 1}, [{k: v for k, v in e.items() if k != "t"} for e in ev])
+        self.assertIn("done", [e["type"] for e in ev])
+
     def test_no_drag_if_board_changed(self):
         m = RecMouse()
         other = ["RBGRBG", "BGDGRB", "GDLDBR", "RBDRGB", "BGDBRH"]

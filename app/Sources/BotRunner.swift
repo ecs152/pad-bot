@@ -24,6 +24,20 @@ final class BotRunner: ObservableObject {
     private var process: Process?
     private var buffer = Data()
 
+    init() {
+        // Quitting the app any way (⌘Q, menu, logout) must not leave a live bot running without a window.
+        NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil,
+                                               queue: nil) { [weak self] _ in self?.stopAndWait() }
+    }
+
+    private func stopAndWait() {
+        guard let p = process, p.isRunning else { return }
+        p.interrupt()
+        let deadline = Date().addingTimeInterval(2)
+        while p.isRunning && Date() < deadline { usleep(50_000) }
+        if p.isRunning { p.terminate() }
+    }
+
     /// Repo folder: written into Info.plist by app/build.sh.
     static let root: URL = {
         let p = Bundle.main.object(forInfoDictionaryKey: "PadBotRoot") as? String
@@ -49,6 +63,7 @@ final class BotRunner: ObservableObject {
         p.standardError = pipe
         pipe.fileHandleForReading.readabilityHandler = { [weak self] h in
             let d = h.availableData
+            if d.isEmpty { h.readabilityHandler = nil; return }  // EOF: child exited
             DispatchQueue.main.async { self?.consume(d) }
         }
         p.terminationHandler = { [weak self] proc in
@@ -99,7 +114,7 @@ final class BotRunner: ObservableObject {
         case "cleared": cleared = obj["count"] as? Int ?? cleared
         case "stop":
             stopReason = obj["reason"] as? String ?? "unknown"
-            alert()
+            if stopReason != "Stopped by user" { alert() }
         default: break
         }
     }

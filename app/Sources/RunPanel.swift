@@ -49,7 +49,7 @@ struct RunPanel: View {
         .confirmationDialog("Start a live run?", isPresented: $confirmLive) {
             Button("Start live") { start() }
         } message: {
-            Text("The bot will tap and drag in iPhone Mirroring and control your mouse. Move the mouse to the top-left corner or press ⌘. to stop.")
+            Text("The bot will tap and drag in iPhone Mirroring and control your mouse. To stop it, move the mouse to the top-left corner of the screen, or use Stop in the menu bar.")
         }
     }
 

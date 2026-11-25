@@ -12,6 +12,9 @@ struct PadBotApp: App {
             Snapshot.renderAll(to: CommandLine.arguments[i + 1])
             exit(0)
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--selftest"), i + 1 < CommandLine.arguments.count {
+            SelfTest.run(replay: CommandLine.arguments[i + 1])
+        }
     }
 
     var body: some Scene {
