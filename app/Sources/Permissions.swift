@@ -47,7 +47,7 @@ struct PermissionsSheet: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("PAD Bot needs two permissions").font(.title3).bold()
             row("Screen Recording", "To see the iPhone Mirroring window.", perms.screen, "Privacy_ScreenCapture")
-            row("Accessibility", "To tap and drag on the phone in live runs.", perms.accessibility, "Privacy_Accessibility")
+            row("Accessibility", "To tap and drag on the phone.", perms.accessibility, "Privacy_Accessibility")
             Text("Turn PAD Bot on in each list. macOS may ask you to quit and reopen PAD Bot after Screen Recording.")
                 .font(.callout).foregroundStyle(.secondary)
             HStack {

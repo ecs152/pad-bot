@@ -46,7 +46,7 @@ final class BotRunner: ObservableObject {
 
     var status: String {
         if running {
-            return "\(live ? "Live" : "Practice"): \(screen.isEmpty ? "starting" : screen.replacingOccurrences(of: "_", with: " ")), turn \(turn), cleared \(cleared)/\(runs)"
+            return "Running: \(screen.isEmpty ? "starting" : screen.replacingOccurrences(of: "_", with: " ")), turn \(turn), cleared \(cleared)/\(runs)"
         }
         if let r = stopReason { return "Stopped: \(r)" }
         return cleared > 0 ? "Done: \(cleared) clear(s)" : "Idle"

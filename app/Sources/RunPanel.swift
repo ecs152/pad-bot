@@ -5,11 +5,9 @@ struct RunPanel: View {
     @AppStorage("uncleared") private var uncleared = true
     @AppStorage("path") private var path = ""
     @AppStorage("runs") private var runs = 1
-    @State private var practice = true  // not remembered: every launch starts in practice mode
     @AppStorage("maxRuns") private var maxRuns = 20
     @AppStorage("extraStopWords") private var extraStopWords = ""
     @AppStorage("profile") private var profile = "profiles/lugner.toml"
-    @State private var confirmLive = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -26,7 +24,6 @@ struct RunPanel: View {
                     ForEach(teamFiles, id: \.self) { Text(($0 as NSString).lastPathComponent.replacingOccurrences(of: ".toml", with: "")).tag($0) }
                 }
                 Stepper("Runs: \(min(runs, maxRuns))", value: $runs, in: 1...max(1, maxRuns))
-                Toggle("Practice run (reads and plans, no taps)", isOn: $practice)
             }
             .disabled(bot.running)
 
@@ -35,9 +32,7 @@ struct RunPanel: View {
                     Button(role: .destructive) { bot.stop() } label: { Label("Stop", systemImage: "stop.fill") }
                         .keyboardShortcut(".", modifiers: .command)
                 } else {
-                    Button { practice ? start() : (confirmLive = true) } label: {
-                        Label(practice ? "Start practice" : "Start live", systemImage: "play.fill")
-                    }
+                    Button { start() } label: { Label("Start", systemImage: "play.fill") }
                     .keyboardShortcut(.return, modifiers: .command)
                     .disabled(!uncleared && !path.contains("/"))
                 }
@@ -51,12 +46,10 @@ struct RunPanel: View {
             }
             .controlSize(.large)
 
+            Text("Start taps and drags on the phone and takes your mouse. To stop, move the mouse to the top-left corner, or use Stop in the menu bar.")
+                .font(.caption).foregroundStyle(.secondary)
+
             LogView(lines: bot.log)
-        }
-        .confirmationDialog("Start a live run?", isPresented: $confirmLive) {
-            Button("Start live") { start() }
-        } message: {
-            Text("The bot will tap and drag in iPhone Mirroring and control your mouse. To stop it, move the mouse to the top-left corner of the screen, or use Stop in the menu bar.")
         }
     }
 
@@ -69,7 +62,7 @@ struct RunPanel: View {
         var args = uncleared ? ["--uncleared"] : ["--path", path]
         args += ["--profile", profile]
         args += ["--runs", String(min(runs, maxRuns))]
-        if !practice { args.append("--live") }
+        args.append("--live")  // no practice mode: a failed run only costs stamina
         if !extraStopWords.isEmpty { args += ["--stop-words", extraStopWords] }
         bot.start(args: args)
     }

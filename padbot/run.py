@@ -83,7 +83,7 @@ class Bot:
 
     def read(self, img):
         lines = self.ocr(img)
-        w = nav.stop_word(lines, self.extra_stop)
+        w = nav.stop_word(nav.banner_free(lines), self.extra_stop)
         if w:
             self.fail(img, f"Stop word on screen: '{w}'")
         st = stamina(lines, img.shape[0])

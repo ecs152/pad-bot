@@ -16,12 +16,10 @@ struct QueuePanel: View {
     /// Snapshot swaps in a scratch store so its sample queue never replaces the user's.
     static var store = UserDefaults.standard
     @AppStorage("queue", store: QueuePanel.store) private var stored = "[]"
-    @AppStorage("practice") private var practice = true
     @AppStorage("maxRuns") private var maxRuns = 20
     @AppStorage("extraStopWords") private var extraStopWords = ""
     @AppStorage("profile") private var profile = "profiles/lugner.toml"  // team picked on the Run tab
     @State private var items: [QueueItem] = []
-    @State private var confirmLive = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -59,15 +57,11 @@ struct QueuePanel: View {
             }
             .disabled(bot.running)
 
-            Toggle("Practice run (reads and plans, no taps)", isOn: $practice).disabled(bot.running)
-
             HStack {
                 if bot.running {
                     Button(role: .destructive) { bot.stop() } label: { Label("Stop", systemImage: "stop.fill") }
                 } else {
-                    Button { practice ? start() : (confirmLive = true) } label: {
-                        Label(practice ? "Start queue (practice)" : "Start queue live", systemImage: "play.fill")
-                    }
+                    Button { start() } label: { Label("Start queue", systemImage: "play.fill") }
                     .disabled(planned.isEmpty || !items.allSatisfy(\.valid))
                 }
                 Spacer()
@@ -75,17 +69,14 @@ struct QueuePanel: View {
             }
             .controlSize(.large)
 
+            Text("Start taps and drags on the phone and takes your mouse. To stop, move the mouse to the top-left corner, or use Stop in the menu bar.")
+                .font(.caption).foregroundStyle(.secondary)
             if let p = position { Text(p).font(.callout) }
             Text(bot.status).font(.callout).foregroundStyle(.secondary).lineLimit(2)
         }
         .onAppear { items = (try? JSONDecoder().decode([QueueItem].self, from: Data(stored.utf8))) ?? [] }
         .onChange(of: items) { _, v in
             if let d = try? JSONEncoder().encode(v) { stored = String(decoding: d, as: UTF8.self) }
-        }
-        .confirmationDialog("Start a live queue?", isPresented: $confirmLive) {
-            Button("Start live") { start() }
-        } message: {
-            Text("The bot will tap and drag in iPhone Mirroring and control your mouse for every target in the queue. To stop it, move the mouse to the top-left corner of the screen, or use Stop in the menu bar.")
         }
     }
 
@@ -122,7 +113,7 @@ struct QueuePanel: View {
         let q: [[String: Any]] = planned.map { $0.uncleared ? ["uncleared": true, "runs": $0.runs] : ["path": $0.path, "runs": $0.runs] }
         guard let d = try? JSONSerialization.data(withJSONObject: q) else { return }
         var args = ["--queue", String(decoding: d, as: UTF8.self)]
-        if !practice { args.append("--live") }
+        args.append("--live")  // no practice mode: a failed run only costs stamina
         if !extraStopWords.isEmpty { args += ["--stop-words", extraStopWords] }
         args += ["--profile", profile]
         bot.start(args: args)
