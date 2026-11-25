@@ -23,6 +23,25 @@ class Decide(unittest.TestCase):
         self.assertEqual(nav.decide(TITLE, PATH, "You", 1440)[:2], ("title", "START"))
         self.assertIsNone(nav.stop_word(nav.banner_free(TITLE)))
 
+    def test_login_notice_taps_ok(self):
+        notice = lines(("Helper History", 608), ("you received 100 Pal Points!", 767), ("OK", 931),
+                       ("Dungeon", 1339), ("Monster", 1339), ("Machine", 1339))
+        self.assertEqual(nav.decide(notice, PATH, "You", 1440)[:2], ("popup", "OK"))
+
+    def test_ok_with_a_choice_is_not_a_notice(self):
+        k, _, _ = nav.decide(lines(("Sell this monster?", 600), ("OK", 900), ("Cancel", 900)), PATH, "You", 1440)
+        self.assertNotEqual(k, "popup")
+
+    def test_home_opens_dungeon_menu(self):
+        home = lines(("Dungeon", 1339), ("Monster", 1339), ("Machine", 1339), ("585/585", 269))
+        self.assertEqual(nav.decide(home + lines(("Back", 300), ("Aither Desert", 700)), PATH, "You", 1440)[:2],
+                         ("list", "Aither Desert"))  # the tab bar alone doesn't make it home
+        self.assertEqual(nav.decide(home, PATH, "You", 1440)[:2], ("home", "Dungeon"))
+
+    def test_uncleared_mode_picks_normal_dungeons_in_menu(self):
+        menu = lines(("Normal Dungeons", 500), ("Special Dungeons", 700))
+        self.assertEqual(nav.decide(menu, [], "You", 1440, new_only=True)[:2], ("menu", "Normal Dungeons"))
+
     def test_magic_stone_still_stops_off_the_title_screen(self):
         shop = lines(("START", 300), ("Buy 100 Magic Stones", 1258))  # START alone isn't the title screen
         self.assertEqual(nav.stop_word(nav.banner_free(shop)), "magic stone")

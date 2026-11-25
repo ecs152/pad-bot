@@ -225,7 +225,7 @@ class Pipeline(unittest.TestCase):
     def test_screen_changed_before_tap_not_tapped(self):
         m = RecMouse()
         with self.assertRaises(Stop):  # the new screen is unknown, so it also stops
-            self.bot([screen("TIPS", "OK"), screen("Not sure what this is", "OK")], m).run(max_iterations=1)
+            self.bot([screen("TIPS", "OK"), screen("Not sure what this is")], m).run(max_iterations=1)
         self.assertEqual(m.taps, [])
 
     def test_tap_with_no_effect_stops(self):
