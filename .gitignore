@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+# personal captures and run logs (show your account name), and the bulky fan-data dumps
+shots/
+logs/
+data/

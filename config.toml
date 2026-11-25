@@ -1,0 +1,27 @@
+# Layout and screen flow. Positions are fractions of the captured window (0..1),
+# so they survive window resizes. Calibrated in step 2 from your own screenshots.
+
+poll_seconds = 0.5
+unknown_stop_seconds = 10     # unrecognised screen for this long -> stop
+busy_stop_seconds = 45        # battle animations longer than this -> stop
+tap_change_seconds = 10      # a menu tap must change the screen within this, else stop
+stall_stop_seconds = 60       # no tap or drag for this long -> stop (e.g. dead team, missing button)
+
+[match]
+screen = 0.88                 # template thresholds (TM_CCOEFF_NORMED)
+button = 0.90
+icon = 0.85
+stop = 0.80                   # deliberately loose: false stops are fine, missed stops are not
+orb_max_dist = 40.0           # mean abs pixel diff to the nearest reference orb
+
+[layout]
+board = [0.0307, 0.6, 0.9678, 0.9528]     # x0, y0, x1, y1  (calibrated 2026-11-24, 652x1440 capture)
+# leader, sub1..sub4, friend leader portrait centres (calibrated in battle)
+portraits = [[0.107, 0.533], [0.264, 0.533], [0.42, 0.533], [0.577, 0.533], [0.733, 0.533], [0.89, 0.533]]
+
+[nav]
+# Names to tap through, outermost first (dungeon, then floor). Text is read off the screen,
+# so spelling must match what the game shows. Override with: run --path "Dungeon/Floor".
+path = ["Aither Desert", "Beyond the Desert"]
+helper = "You"        # tap the helper row showing this label (your own Lügner shows "You")
+max_scrolls = 6       # scroll the list this many times looking for a name, then stop
