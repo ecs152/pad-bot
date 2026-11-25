@@ -82,7 +82,7 @@ def back(lines):
 def decide(lines, path, helper, height, new_only=False, skip=()):
     """Returns (kind, label, box) for the next tap, or (kind, None, None) if nothing to tap.
     skip: dungeon names uncleared mode never enters (and backs out of).
-    kind: title | results | tips | helper_popup | helper | enter | list | unknown
+    kind: title | popup | home | menu | results | tips | helper_popup | helper | enter | list | unknown
     ("list", None, None) = a list screen whose visible part lacks the target."""
     has = lambda label, exact=False: find(lines, label, exact)
     if title_start(lines):
@@ -97,6 +97,15 @@ def decide(lines, path, helper, height, new_only=False, skip=()):
         return "helper", helper, has(helper, exact=True)
     if has("Enter Dungeon"):
         return "enter", "Enter", has("Enter", exact=True)
+    # Notices after login (Helper History, login bonus, news): one OK/Close and no choice to make.
+    # Stop words were checked first, so a Magic Stone offer never gets here.
+    if not any(has(w, exact=True) for w in ("Cancel", "No", "Yes", "Back")):
+        for w in ("OK", "Close"):
+            if has(w, exact=True):
+                return "popup", w, has(w, exact=True)
+    # The tab bar shows on most screens; home is the one with the tab bar and no Back button.
+    if has("Dungeon", exact=True) and has("Machine", exact=True) and not has("Back", exact=True):
+        return "home", "Dungeon", has("Dungeon", exact=True)
     if new_only:
         floors = [t for t, _, _ in lines if CODE.match(t.strip()) and t.count("-") == 2]
         if floors and any(find(lines, name) for name in skip):  # inside a skipped dungeon: leave it
@@ -109,6 +118,8 @@ def decide(lines, path, helper, height, new_only=False, skip=()):
             return back(lines)
         if find(lines, "Back", exact=True) and any(CODE.match(t.strip()) for t, _, _ in lines):
             return "list", None, None  # dungeon list, nothing uncleared in view: scroll
+        if has("Normal Dungeons", exact=True):  # dungeon menu: uncleared floors are in Normal Dungeons
+            return "menu", "Normal Dungeons", has("Normal Dungeons", exact=True)
         return "unknown", None, None
     title = [l for l in lines if 0.2 * height < l[2][1] < 0.27 * height and norm(l[0]) != "back"]
     floor_codes = any(CODE.match(t.strip()) and t.count("-") == 2 for t, _, _ in lines)

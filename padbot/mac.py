@@ -65,8 +65,10 @@ def capture():
     sx, sy = img.shape[1] / bounds[2], img.shape[0] / bounds[3]
     if abs(sx - sy) > 0.05:
         raise Stop(f"Capture {img.shape[1]}x{img.shape[0]} doesn't match window {bounds[2]}x{bounds[3]}")
-    if img.std() < 3:
-        raise Stop("Capture is blank. Screen Recording permission is probably missing (see README).")
+    if img.std() < 3 and not __import__("Quartz").CGPreflightScreenCaptureAccess():
+        raise Stop("Capture is blank and Screen Recording permission is off for PAD Bot. Turn it on in System "
+                   "Settings > Privacy & Security > Screen & System Audio Recording.")
+    # With the permission on, a blank frame is a loading screen: the caller sees an unknown screen and waits.
     return img, bounds
 
 

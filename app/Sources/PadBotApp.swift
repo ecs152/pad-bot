@@ -12,6 +12,13 @@ struct PadBotApp: App {
             Snapshot.renderAll(to: CommandLine.arguments[i + 1])
             exit(0)
         }
+        // `open -n "PAD Bot.app" --args --permcheck FILE`: writes the grants macOS gives this build, then exits.
+        // Run through `open` so macOS checks PAD Bot itself, not the terminal. app/build.sh uses it after installing.
+        if let i = CommandLine.arguments.firstIndex(of: "--permcheck"), i + 1 < CommandLine.arguments.count {
+            let p = Permissions.shared
+            try? "screen=\(p.screen) accessibility=\(p.accessibility)\n".write(toFile: CommandLine.arguments[i + 1], atomically: true, encoding: .utf8)
+            exit(0)
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--selftest"), i + 1 < CommandLine.arguments.count {
             SelfTest.run(replay: CommandLine.arguments[i + 1])
         }

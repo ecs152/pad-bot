@@ -31,4 +31,7 @@ if [ "$1" != "--no-install" ]; then
   rm -rf "$DEST/PAD Bot.app" "$HOME/Applications/PAD Bot.app"  # one copy only, so Spotlight finds the current one
   cp -R "$APP" "$DEST/"
   echo "Installed $DEST/PAD Bot.app"
+  OUT=$(mktemp)
+  open -n -W "$DEST/PAD Bot.app" --args --permcheck "$OUT" && echo "Permissions: $(cat "$OUT")"
+  rm -f "$OUT"
 fi
