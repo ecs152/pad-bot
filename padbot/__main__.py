@@ -4,6 +4,7 @@
   crop PNG KIND NAME X Y W H     save a template crop (pixels) to templates/KIND/NAME.png
   board PNG                      read the board, solve the default goal, save PNG-route.png
   testdrag R1 C1 R2 C2 [--live]  drag one orb between board cells (needs a battle on screen)
+  watch                          live board view beside the Mirroring window (read-only)
   run [--live] [--runs N] [--path "Dungeon/Floor" | --uncleared] [--replay DIR]
 """
 import argparse
@@ -53,6 +54,7 @@ def main(argv=None):
     for a in ("r1", "c1", "r2", "c2"):
         s.add_argument(a, type=int)
     s.add_argument("--live", action="store_true")
+    sub.add_parser("watch")
     s = sub.add_parser("run")
     s.add_argument("--live", action="store_true")
     s.add_argument("--runs", type=int, default=1, help="clears before stopping")
@@ -103,6 +105,9 @@ def main(argv=None):
             m = Mouse(a.live)
             m.focus()
             m.drag(pts)
+        elif a.cmd == "watch":
+            from .boardview import watch
+            watch()
         elif a.cmd == "run":
             grab = capture
             if a.replay:
