@@ -22,7 +22,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>PadBotRoot</key><string>$(pwd)</string>
 </dict></plist>
 PLIST
-codesign --force -s - "$APP"
+# Fixed requirement (bundle id only), so macOS keeps Screen Recording/Accessibility grants across rebuilds.
+# shortcut: any app signed as local.padbot would match; use a real signing identity if this is ever shared.
+codesign --force -s - -r='designated => identifier "local.padbot"' "$APP"
 if [ "$1" != "--no-install" ]; then
   DEST=/Applications
   [ -w "$DEST" ] || { DEST="$HOME/Applications"; mkdir -p "$DEST"; }
