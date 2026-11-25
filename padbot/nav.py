@@ -38,6 +38,21 @@ def stop_word(lines, extra=()):
     return next((w for w in STOP_WORDS + tuple(extra) if norm(w) + ("?" if w.endswith("?") else "") in text), None)
 
 
+def title_start(lines):
+    """START's box on the game's title screen, else None. Needs START plus the title screen's own text."""
+    start = find(lines, "START", exact=True)
+    if start and (find(lines, "GungHo Online") or (find(lines, "Data", exact=True) and find(lines, "Recou"))):
+        return start
+    return None
+
+
+def banner_free(lines):
+    """Lines minus the title screen's ad banner (below START), which advertises Magic Stone deals.
+    Other screens are returned unchanged, so stop words still apply everywhere else."""
+    start = title_start(lines)
+    return [l for l in lines if l[2][1] <= start[1]] if start else lines
+
+
 CODE = re.compile(r"^\d+-\d+(-\d+)?$")  # "4-6" is a dungeon, "4-6-5" a floor
 
 
@@ -67,9 +82,11 @@ def back(lines):
 def decide(lines, path, helper, height, new_only=False, skip=()):
     """Returns (kind, label, box) for the next tap, or (kind, None, None) if nothing to tap.
     skip: dungeon names uncleared mode never enters (and backs out of).
-    kind: results | tips | helper_popup | helper | enter | list | unknown
+    kind: title | results | tips | helper_popup | helper | enter | list | unknown
     ("list", None, None) = a list screen whose visible part lacks the target."""
     has = lambda label, exact=False: find(lines, label, exact)
+    if title_start(lines):
+        return "title", "START", title_start(lines)
     if has("Completion Reward"):
         return "results", "Completion Reward", has("Completion Reward")
     if has("TIPS", exact=True) and has("OK", exact=True):

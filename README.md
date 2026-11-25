@@ -94,7 +94,7 @@ Run these from this folder. Nothing touches the phone without `--live`.
 
 ## Mac app
 `app/build.sh` builds `PAD Bot.app` and installs it in `/Applications` (`~/Applications` if that isn't writable) (Command Line Tools only, no
-Xcode). It runs the same bot: pick uncleared floors or a dungeon/floor, the number of runs, and
-whether it's a practice run, then Start. The menu bar icon shows status and has Stop. Grant Screen
+Xcode). It runs the same bot: pick uncleared floors or a dungeon/floor, and the number of runs, then
+Start. Start always plays for real (a failed run only costs stamina). The menu bar icon shows status and has Stop. Grant Screen
 Recording and Accessibility to **PAD Bot** (rebuilding resets them, since the app is signed locally).
 Panels plug in through `app/Sources/Panels.swift`; the bot's event stream is in `docs/events.md`.

@@ -14,7 +14,19 @@ def lines(*items):
     return [(t, 1.0, (100, y, 200, 30)) for t, y in items]
 
 
+TITLE = lines(("Dersion 23.4.0", 170), ("Data", 223), ("Recou.", 250), ("START", 1037),
+              ("© GungHo Online Entertainment, Inc. All Rights Reserved.", 1224), ("100 MAGIC STONES &", 1258))
+
+
 class Decide(unittest.TestCase):
+    def test_title_screen_taps_start_and_ignores_its_banner(self):
+        self.assertEqual(nav.decide(TITLE, PATH, "You", 1440)[:2], ("title", "START"))
+        self.assertIsNone(nav.stop_word(nav.banner_free(TITLE)))
+
+    def test_magic_stone_still_stops_off_the_title_screen(self):
+        shop = lines(("START", 300), ("Buy 100 Magic Stones", 1258))  # START alone isn't the title screen
+        self.assertEqual(nav.stop_word(nav.banner_free(shop)), "magic stone")
+
     def test_floor_list_taps_floor_not_header(self):
         k, label, _ = nav.decide(lines(("Aither Desert", 350), ("Beyond the Desert", 940)), PATH, "You", 1440)
         self.assertEqual((k, label), ("list", "Beyond the Desert"))
