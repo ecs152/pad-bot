@@ -58,8 +58,15 @@ def uncleared(lines):
     return out
 
 
-def decide(lines, path, helper, height, new_only=False):
+def back(lines):
+    """Tap Back; if it can't be read, call the screen unknown (never ("list", None) — that would scroll)."""
+    box = find(lines, "Back", exact=True)
+    return ("list", "Back", box) if box else ("unknown", None, None)
+
+
+def decide(lines, path, helper, height, new_only=False, skip=()):
     """Returns (kind, label, box) for the next tap, or (kind, None, None) if nothing to tap.
+    skip: dungeon names uncleared mode never enters (and backs out of).
     kind: results | tips | helper_popup | helper | enter | list | unknown
     ("list", None, None) = a list screen whose visible part lacks the target."""
     has = lambda label, exact=False: find(lines, label, exact)
@@ -74,13 +81,15 @@ def decide(lines, path, helper, height, new_only=False):
     if has("Enter Dungeon"):
         return "enter", "Enter", has("Enter", exact=True)
     if new_only:
-        todo = uncleared(lines)
+        floors = [t for t, _, _ in lines if CODE.match(t.strip()) and t.count("-") == 2]
+        if floors and any(find(lines, name) for name in skip):  # inside a skipped dungeon: leave it
+            return back(lines)
+        todo = [e for e in uncleared(lines) if not any(find([(e[1], 1, e[2])], name) for name in skip)]
         if todo:
             code, title, box = todo[0]
             return "list", title, box
-        floors = [t for t, _, _ in lines if CODE.match(t.strip()) and t.count("-") == 2]
         if floors:  # a floor list with every floor cleared: back out to the dungeon list
-            return "list", "Back", find(lines, "Back", exact=True)
+            return back(lines)
         if find(lines, "Back", exact=True) and any(CODE.match(t.strip()) for t, _, _ in lines):
             return "list", None, None  # dungeon list, nothing uncleared in view: scroll
         return "unknown", None, None

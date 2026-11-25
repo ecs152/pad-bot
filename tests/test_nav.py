@@ -65,6 +65,13 @@ class Uncleared(unittest.TestCase):
         L = self.rows(("Back", 33, 338), ("4-6-4", 64, 562), ("Clear!", 179, 567), ("Guards of the Light", 64, 598))
         self.assertEqual(nav.decide(L, [], "You", 1440, new_only=True)[:2], ("list", "Back"))
 
+    def test_skipped_dungeon_not_entered_and_left(self):
+        D = self.rows(("Back", 31, 339), ("4-6", 123, 399), ("Aither Desert", 121, 445),
+                      ("4-7", 123, 560), ("Sky Garden", 121, 606))
+        self.assertEqual(nav.decide(D, [], "You", 1440, True, ("Aither Desert",))[:2], ("list", "Sky Garden"))
+        F = self.rows(("Back", 33, 338), ("Aither Desert", 200, 338), ("4-6-5", 64, 397), ("Genie of the Lamp", 64, 432))
+        self.assertEqual(nav.decide(F, [], "You", 1440, True, ("Aither Desert",))[:2], ("list", "Back"))
+
     def test_dungeon_list_all_cleared_scrolls(self):
         L = self.rows(("Back", 31, 339), ("4-10", 123, 399), ("Clear!", 238, 399), ("Paradise", 121, 445))
         self.assertEqual(nav.decide(L, [], "You", 1440, new_only=True), ("list", None, None))
@@ -92,6 +99,8 @@ class RealScreens(unittest.TestCase):
         for f, want in (("r3.png", "Genie of the Lamp"), ("n4.png", None)):
             img = cv2.imread(str(SHOTS / f))
             self.assertEqual(nav.decide(read_text(img), [], "You", img.shape[0], new_only=True)[1], want)
+        img = cv2.imread(str(SHOTS / "r3.png"))  # Aither Desert floor list, skipped: back out
+        self.assertEqual(nav.decide(read_text(img), [], "You", img.shape[0], True, ("Aither Desert",))[1], "Back")
 
 
 if __name__ == "__main__":

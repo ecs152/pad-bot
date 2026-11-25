@@ -24,4 +24,5 @@ portraits = [[0.107, 0.533], [0.264, 0.533], [0.42, 0.533], [0.577, 0.533], [0.7
 # so spelling must match what the game shows. Override with: run --path "Dungeon/Floor".
 path = ["Aither Desert", "Beyond the Desert"]
 helper = "You"        # tap the helper row showing this label (your own Lügner shows "You")
+skip = ["Aither Desert"]   # --uncleared never enters these dungeons
 max_scrolls = 6       # scroll the list this many times looking for a name, then stop

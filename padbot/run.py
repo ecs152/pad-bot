@@ -26,6 +26,7 @@ class Bot:
         n = cfg.get("nav", {})
         self.path, self.helper = list(n.get("path", [])), n.get("helper", "You")
         self.new_only = bool(n.get("uncleared", False))
+        self.skip = tuple(n.get("skip", []))
         self.extra_stop = tuple(w.lower() for w in cfg.get("safety", {}).get("stop_words", []))
         bad = [x for x in self.path + [self.helper] if nav.stop_word([(x + "?", 1, (0, 0, 0, 0))], self.extra_stop)]
         if bad:
@@ -78,11 +79,11 @@ class Bot:
         screen, _ = self.classify(img)
         if screen:
             return screen, None, None
-        return nav.decide(self.read(img), self.path, self.helper, img.shape[0], self.new_only)
+        return nav.decide(self.read(img), self.path, self.helper, img.shape[0], self.new_only, self.skip)
 
     def navigate(self, img):
         """One navigation step on a non-battle screen. Returns (kind, tapped)."""
-        kind, label, _ = nav.decide(self.read(img), self.path, self.helper, img.shape[0], self.new_only)
+        kind, label, _ = nav.decide(self.read(img), self.path, self.helper, img.shape[0], self.new_only, self.skip)
         if label is None:
             return kind, False
         # decided on one frame, tap on a fresh one that still agrees
@@ -218,7 +219,7 @@ class Bot:
             screen, board = self.classify(img)
             tapped = False
             if screen is None and result_taps and nav.decide(self.read(img), self.path, self.helper, img.shape[0],
-                                                             self.new_only)[0] not in ("results", "unknown"):
+                                                             self.new_only, self.skip)[0] not in ("results", "unknown"):
                 result_taps, cleared = 0, cleared + 1  # rewards screen left: count before tapping anything else
                 print(f"cleared {cleared}/{runs}")
                 emit("cleared", count=cleared, runs=runs)
