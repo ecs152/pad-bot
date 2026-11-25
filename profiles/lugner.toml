@@ -1,6 +1,7 @@
 name = "Lügner"
 notes = "Read off the team on 2026-11-24 (NA). Leader: [No Skyfall Combos] 150x ATK, halves damage, 15,000,000 damage when a skill is used. Lügner active (3 turns): removes locks, makes an enhanced dark cross, voids combo absorb and damage void for 1 turn, so one Lügner per turn, then keep the cross. Combo absorb and damage void need no extra counter; they are listed so the icons are known once captured."
 max_steps = 15
+leader_skill = "False Envoy of Peace"
 
 [slots]
 "1" = "Lügner (leader)"

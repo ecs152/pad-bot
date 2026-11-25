@@ -31,6 +31,7 @@ class Bot:
         self.set_target(n.get("path", []), n.get("uncleared", False))
         self.turn, self.ready_at = 0, {}
         self.stamina, self.coins, self.drops, self.floor = None, None, None, None
+        self.team_swipes = 0
         self.run_t0 = time.time()
         self.done_before, self.total_runs = 0, None  # queue progress, for the `cleared` event
         LOGS.mkdir(exist_ok=True)
@@ -117,7 +118,10 @@ class Bot:
 
     def navigate(self, img):
         """One navigation step on a non-battle screen. Returns (kind, tapped)."""
-        kind, label, _ = nav.decide(self.read(img), self.path, self.helper, img.shape[0], self.new_only, self.skip)
+        lines = self.read(img)
+        kind, label, _ = nav.decide(lines, self.path, self.helper, img.shape[0], self.new_only, self.skip)
+        if kind == "enter" and not self.team_ok(lines, img.shape[0]):
+            return kind, self.next_team(img)
         if label is None:
             return kind, False
         # decided on one frame, tap on a fresh one that still agrees
@@ -134,18 +138,46 @@ class Bot:
         if kind == "results":
             time.sleep(1.5)  # rewards fill in over several taps on the same screen; the loop caps re-taps
         else:
-            self.wait_change(kind, label)
+            self.wait_change(kind, label, box)
         return kind, True
 
-    def wait_change(self, kind, label):
+    def team_ok(self, lines, height):
+        """Enter screen: is the profile's team selected? Its leader skill name shows above the helper's."""
+        want = self.profile.get("leader_skill")
+        if not want:
+            return True
+        own = [l for l in lines if l[2][1] < 0.62 * height]  # the helper's leader skill sits lower, at ~0.69
+        if nav.find(own, want):
+            self.team_swipes = 0
+            return True
+        return False
+
+    def next_team(self, img):
+        """Swipe the team carousel: back towards team 1 first, then forward through every team."""
+        self.team_swipes += 1
+        back, total = 10, 40
+        if self.team_swipes > total:
+            self.fail(img, f"No team with leader skill '{self.profile['leader_skill']}' after {total} swipes")
+        img, bounds = self.frame()
+        h, w = img.shape[:2]
+        xs = (0.2, 0.4, 0.6, 0.8) if self.team_swipes <= back else (0.8, 0.6, 0.4, 0.2)
+        print(f"  team: swipe {'back' if self.team_swipes <= back else 'forward'} ({self.team_swipes})")
+        self.mouse.drag([to_point(w * x, h * 0.65, w, bounds) for x in xs], step_s=0.08)
+        self.last_progress = time.time()
+        time.sleep(0.8)
+        return True
+
+    def wait_change(self, kind, label, box0=None):
         """After a tap the screen must move on. If it doesn't, something we can't read (a stamina or
         stone prompt) may be in the way, so stop instead of tapping the same spot again."""
         t0 = time.time()
         while time.time() - t0 < self.cfg.get("tap_change_seconds", 10):
             time.sleep(0.6)
             img, _ = self.frame()
-            k, l, _ = self.kind(img)
-            if (k, l) != (kind, label):
+            k, l, box = self.kind(img)
+            # a new popup with its OK somewhere else counts as a change (notices come one after another)
+            moved = box is not None and box0 is not None and abs(box[1] - box0[1]) > 20
+            if (k, l) != (kind, label) or moved:
                 return
         self.fail(img, f"Tapped '{label}' but the screen didn't change")
 

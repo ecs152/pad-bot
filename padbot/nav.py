@@ -95,6 +95,8 @@ def decide(lines, path, helper, height, new_only=False, skip=()):
         if has("Check Info") and has("Select", exact=True):
             return "helper_popup", "Select", has("Select", exact=True)
         return "helper", helper, has(helper, exact=True)
+    if has("Attention") and has("OK", exact=True):  # e.g. "A Leader must be set": dismiss, then fix the team
+        return "popup", "OK", has("OK", exact=True)
     if has("Enter Dungeon"):
         return "enter", "Enter", has("Enter", exact=True)
     # Notices after login (Helper History, login bonus, news): one OK/Close and no choice to make.
@@ -103,9 +105,6 @@ def decide(lines, path, helper, height, new_only=False, skip=()):
         for w in ("OK", "Close"):
             if has(w, exact=True):
                 return "popup", w, has(w, exact=True)
-    # The tab bar shows on most screens; home is the one with the tab bar and no Back button.
-    if has("Dungeon", exact=True) and has("Machine", exact=True) and not has("Back", exact=True):
-        return "home", "Dungeon", has("Dungeon", exact=True)
     if new_only:
         floors = [t for t, _, _ in lines if CODE.match(t.strip()) and t.count("-") == 2]
         if floors and any(find(lines, name) for name in skip):  # inside a skipped dungeon: leave it
@@ -118,9 +117,17 @@ def decide(lines, path, helper, height, new_only=False, skip=()):
             return back(lines)
         if find(lines, "Back", exact=True) and any(CODE.match(t.strip()) for t, _, _ in lines):
             return "list", None, None  # dungeon list, nothing uncleared in view: scroll
-        if has("Normal Dungeons", exact=True):  # dungeon menu: uncleared floors are in Normal Dungeons
-            return "menu", "Normal Dungeons", has("Normal Dungeons", exact=True)
-        return "unknown", None, None
+        if has("Special", exact=True) and has("Story", exact=True) and has("Stage", exact=True):
+            return "menu", "Stage", has("Stage", exact=True)  # dungeon menu (Special / Stage / Story ...)
+        stages = sorted((b for t, _, b in lines if norm(t) == "stage"), key=lambda b: b[1])
+        if has("Back", exact=True) and stages:  # Stage Dungeons on ALL/Arena: pick the newest stage tab
+            # shortcut: always the top tab (Stage 5); when it is all cleared, the scroll limit stops the run
+            return "filter", "Stage", stages[0]
+        for menu in ("Stage Dungeons", "Normal Dungeons"):  # dungeon menu: uncleared floors live here
+            box = find(lines, menu, exact=True, min_y=0.27 * height)  # not the list's own title bar
+            if box:
+                return "menu", menu, box
+        return to_dungeons(lines)
     title = [l for l in lines if 0.2 * height < l[2][1] < 0.27 * height and norm(l[0]) != "back"]
     floor_codes = any(CODE.match(t.strip()) and t.count("-") == 2 for t, _, _ in lines)
     if len(path) > 1 and title and floor_codes and has("Back", exact=True) and not find(title, path[0]):
@@ -133,5 +140,13 @@ def decide(lines, path, helper, height, new_only=False, skip=()):
         return "list", None, None  # a floor list without our target on it yet: scroll
     if find(lines, "Back", exact=True) and any(CODE.match(t.strip()) and t.count("-") == 1 for t, _, _ in lines):
         return "list", None, None  # dungeon list ("4-6" codes) without our dungeon in view: scroll
-    # shortcut: lists only scroll down, so a dungeon above the visible part is never found; add scroll-up if that bites
+    return to_dungeons(lines)
+
+
+def to_dungeons(lines):
+    """Last resort on a screen we don't handle (home, mail box, shop...): the tab bar's Dungeon button.
+    Checked after every list/menu rule, because the tab bar shows on those screens too."""
+    box = find(lines, "Dungeon", exact=True)
+    if box and find(lines, "Machine", exact=True):
+        return "home", "Dungeon", box
     return "unknown", None, None
